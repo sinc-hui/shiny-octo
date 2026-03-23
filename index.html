@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>我的通讯录 · 人脉管理</title>
+<style>
+:root {
+  --primary: #4F6EF7; --primary-light: #EEF1FF; --primary-dark: #3451D1;
+  --success: #10B981; --success-light: #ECFDF5;
+  --warning: #F59E0B; --warning-light: #FFFBEB;
+  --danger: #EF4444; --danger-light: #FEF2F2;
+  --gray-50:#F9FAFB; --gray-100:#F3F4F6; --gray-200:#E5E7EB; --gray-300:#D1D5DB;
+  --gray-400:#9CA3AF; --gray-500:#6B7280; --gray-600:#4B5563; --gray-700:#374151;
+  --gray-800:#1F2937; --gray-900:#111827;
+  --sidebar-w:240px; --radius:10px;
+  --shadow:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
+  --shadow-md:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -1px rgba(0,0,0,.06);
+  --shadow-lg:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -2px rgba(0,0,0,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:var(--gray-50);color:var(--gray-800);height:100vh;display:flex;overflow:hidden}
+.sidebar{width:var(--sidebar-w);background:#1E293B;color:#CBD5E1;display:flex;flex-direction:column;flex-shrink:0;height:100vh;overflow-y:auto}
+.sidebar-logo{padding:20px 16px 16px;border-bottom:1px solid #334155}
+.sidebar-logo h1{font-size:16px;font-weight:700;color:#F1F5F9;display:flex;align-items:center;gap:8px}
+.sidebar-logo p{font-size:11px;color:#64748B;margin-top:2px}
+.sidebar-section{padding:12px 8px 4px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:#64748B}
+.sidebar-nav{list-style:none;padding:0 8px}
+.sidebar-nav li{margin-bottom:2px}
+.sidebar-nav a{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;color:#94A3B8;text-decoration:none;font-size:14px;cursor:pointer;transition:all .15s}
+.sidebar-nav a:hover{background:#334155;color:#F1F5F9}
+.sidebar-nav a.active{background:var(--primary);color:#fff}
+.nav-icon{font-size:16px;width:20px;text-align:center}
+.nav-badge{margin-left:auto;background:var(--danger);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:99px}
+.sidebar-tags{padding:8px}
+.tag-item{display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:8px;cursor:pointer;font-size:13px;color:#94A3B8;transition:all .15s}
+.tag-item:hover,.tag-item.active{background:#334155;color:#F1F5F9}
+.tag-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.tag-count{margin-left:auto;font-size:11px;color:#64748B}
+.main{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.topbar{background:#fff;border-bottom:1px solid var(--gray-200);padding:0 24px;height:60px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.topbar h2{font-size:18px;font-weight:600;color:var(--gray-900);margin-right:auto}
+.search-box{position:relative}
+.search-box input{width:240px;padding:8px 12px 8px 36px;border:1px solid var(--gray-200);border-radius:8px;font-size:14px;outline:none;background:var(--gray-50);transition:all .2s}
+.search-box input:focus{border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(79,110,247,.1)}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--gray-400);font-size:14px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-dark)}
+.btn-secondary{background:var(--gray-100);color:var(--gray-700)}
+.btn-secondary:hover{background:var(--gray-200)}
+.btn-danger{background:var(--danger-light);color:var(--danger)}
+.btn-danger:hover{background:var(--danger);color:#fff}
+.btn-sm{padding:5px 12px;font-size:13px}
+.btn-icon{padding:8px;width:36px;height:36px;justify-content:center}
+.content{flex:1;overflow-y:auto;padding:24px}
+.view{display:none}.view.active{display:block}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:#fff;border-radius:var(--radius);padding:16px 20px;box-shadow:var(--shadow)}
+.stat-label{font-size:12px;color:var(--gray-500);font-weight:500}
+.stat-value{font-size:28px;font-weight:700;color:var(--gray-900);margin-top:4px}
+.stat-sub{font-size:12px;color:var(--gray-400);margin-top:2px}
+.stat-card.blue .stat-value{color:var(--primary)}
+.stat-card.green .stat-value{color:var(--success)}
+.stat-card.yellow .stat-value{color:var(--warning)}
+.stat-card.red .stat-value{color:var(--danger)}
+.contact-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.contact-card{background:#fff;border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);cursor:pointer;transition:all .2s;border:2px solid transparent}
+.contact-card:hover{box-shadow:var(--shadow-md);border-color:var(--primary-light);transform:translateY(-1px)}
+.contact-card-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px}
+.avatar{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff;flex-shrink:0}
+.contact-name{font-size:16px;font-weight:600;color:var(--gray-900)}
+.contact-title{font-size:12px;color:var(--gray-500);margin-top:2px}
+.contact-company{font-size:12px;color:var(--primary);margin-top:1px}
+.contact-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:500}
+.contact-meta{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--gray-400)}
+.heat-dot{width:8px;height:8px;border-radius:50%}
+.heat-hot{background:var(--danger)}.heat-warm{background:var(--warning)}.heat-cold{background:var(--gray-300)}
+#detail-view{display:none}
+#detail-view.active{display:flex;gap:20px}
+.detail-left{width:300px;flex-shrink:0;display:flex;flex-direction:column;gap:16px}
+.detail-right{flex:1;display:flex;flex-direction:column;gap:16px}
+.card{background:#fff;border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
+.card-title{font-size:14px;font-weight:600;color:var(--gray-700);margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
+.detail-avatar{width:72px;height:72px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;color:#fff;margin:0 auto 12px}
+.detail-name{text-align:center;font-size:20px;font-weight:700;color:var(--gray-900)}
+.detail-subtitle{text-align:center;font-size:13px;color:var(--gray-500);margin-top:4px}
+.detail-info-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--gray-100);font-size:13px}
+.detail-info-row:last-child{border-bottom:none}
+.info-label{color:var(--gray-400);width:60px;flex-shrink:0}
+.info-val{color:var(--gray-800)}
+.timeline{list-style:none}
+.timeline-item{display:flex;gap:12px;padding-bottom:20px;position:relative}
+.timeline-item:not(:last-child)::before{content:'';position:absolute;left:15px;top:32px;bottom:0;width:2px;background:var(--gray-100)}
+.timeline-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.timeline-content{flex:1}
+.timeline-header{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.timeline-type{font-size:12px;font-weight:600;color:var(--gray-700)}
+.timeline-date{font-size:11px;color:var(--gray-400);margin-left:auto}
+.timeline-body{font-size:13px;color:var(--gray-600);line-height:1.6;background:var(--gray-50);padding:10px 12px;border-radius:8px}
+.timeline-emotion{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:99px;margin-top:6px}
+.task-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--gray-100)}
+.task-item:last-child{border-bottom:none}
+.task-check{width:18px;height:18px;border-radius:4px;border:2px solid var(--gray-300);cursor:pointer;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .15s;color:transparent;font-size:12px}
+.task-check.done{background:var(--success);border-color:var(--success);color:#fff}
+.task-content{flex:1}
+.task-title{font-size:13px;color:var(--gray-800)}
+.task-title.done{text-decoration:line-through;color:var(--gray-400)}
+.task-due{font-size:11px;color:var(--gray-400);margin-top:2px}
+.task-due.overdue{color:var(--danger)}
+.ai-suggestion{background:linear-gradient(135deg,#667EEA 0%,#764BA2 100%);border-radius:var(--radius);padding:20px;color:#fff}
+.ai-suggestion h3{font-size:14px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.suggestion-item{display:flex;gap:8px;margin-bottom:10px;font-size:13px;line-height:1.6;opacity:.95}
+.suggestion-item::before{content:'💡';flex-shrink:0}
+.regen-btn{background:rgba(255,255,255,.2);border:none;color:#fff;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;margin-top:8px;transition:background .15s}
+.regen-btn:hover{background:rgba(255,255,255,.35)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;display:none;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:14px;width:560px;max-height:85vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
+.modal-header{padding:20px 24px 0;display:flex;align-items:center;justify-content:space-between}
+.modal-header h3{font-size:17px;font-weight:600}
+.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--gray-400);padding:4px;border-radius:6px}
+.modal-close:hover{background:var(--gray-100);color:var(--gray-700)}
+.modal-body{padding:20px 24px}
+.modal-footer{padding:0 24px 20px;display:flex;gap:8px;justify-content:flex-end}
+.form-group{margin-bottom:16px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-label{display:block;font-size:13px;font-weight:500;color:var(--gray-700);margin-bottom:6px}
+.form-control{width:100%;padding:9px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:14px;outline:none;color:var(--gray-800);font-family:inherit;transition:all .15s}
+.form-control:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(79,110,247,.1)}
+textarea.form-control{resize:vertical;min-height:80px}
+.tag-input-wrap{display:flex;flex-wrap:wrap;gap:6px;padding:8px;border:1px solid var(--gray-200);border-radius:8px;min-height:42px;cursor:text;transition:all .15s}
+.tag-input-wrap:focus-within{border-color:var(--primary);box-shadow:0 0 0 3px rgba(79,110,247,.1)}
+.tag-input-wrap input{border:none;outline:none;font-size:14px;flex:1;min-width:80px;color:var(--gray-800)}
+.tag-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;font-size:12px;font-weight:500}
+.remove-tag{cursor:pointer;opacity:.7}.remove-tag:hover{opacity:1}
+.comm-type-bar{display:flex;gap:8px;margin-bottom:0;flex-wrap:wrap}
+.comm-type-btn{padding:6px 14px;border-radius:8px;font-size:13px;border:1.5px solid var(--gray-200);background:#fff;cursor:pointer;transition:all .15s}
+.comm-type-btn.active{border-color:var(--primary);background:var(--primary-light);color:var(--primary);font-weight:500}
+.filter-bar{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.filter-btn{padding:6px 14px;border-radius:99px;font-size:13px;font-weight:500;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-600);cursor:pointer;transition:all .15s}
+.filter-btn:hover{border-color:var(--primary);color:var(--primary)}
+.filter-btn.active{border-color:var(--primary);background:var(--primary-light);color:var(--primary)}
+.back-btn{display:inline-flex;align-items:center;gap:6px;font-size:14px;color:var(--gray-500);cursor:pointer;margin-bottom:16px;padding:6px 12px;border-radius:8px;transition:all .15s}
+.back-btn:hover{background:var(--gray-100);color:var(--gray-800)}
+.tab-bar{display:flex;border-bottom:2px solid var(--gray-100);margin-bottom:0;padding:0 20px}
+.tab-btn{padding:12px 20px;font-size:14px;font-weight:500;color:var(--gray-500);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
+.tab-btn:hover{color:var(--gray-800)}
+.tab-btn.active{color:var(--primary);border-bottom-color:var(--primary)}
+.tab-panel{display:none}.tab-panel.active{display:block}
+.heat-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600}
+.heat-badge.hot{background:#FEE2E2;color:var(--danger)}
+.heat-badge.warm{background:#FEF3C7;color:var(--warning)}
+.heat-badge.cold{background:var(--gray-100);color:var(--gray-400)}
+.task-full-item{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--gray-100)}
+.task-full-item:last-child{border-bottom:none}
+.task-full-content{flex:1}
+.task-full-title{font-size:14px;font-weight:500;color:var(--gray-800)}
+.task-full-title.done{text-decoration:line-through;color:var(--gray-400)}
+.task-full-meta{font-size:12px;color:var(--gray-400);margin-top:4px;display:flex;gap:12px}
+.contact-link{color:var(--primary);cursor:pointer}
+.contact-link:hover{text-decoration:underline}
+.overdue{color:var(--danger)!important}
+.empty-state{text-align:center;padding:60px 20px;color:var(--gray-400)}
+.empty-icon{font-size:48px;margin-bottom:12px}
+.empty-state p{font-size:14px}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--gray-200);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--gray-300)}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--gray-900);color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;z-index:2000;transform:translateY(20px);opacity:0;transition:all .3s;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:var(--success)}
+.toast.error{background:var(--danger)}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <h1>📇 人脉管理</h1>
+    <p>Personal CRM</p>
+  </div>
+  <div class="sidebar-section">主菜单</div>
+  <ul class="sidebar-nav">
+    <li><a onclick="showView('dashboard')" id="nav-dashboard" class="active"><span class="nav-icon">🏠</span> 概览</a></li>
+    <li><a onclick="showView('contacts')" id="nav-contacts"><span class="nav-icon">👥</span> 联系人</a></li>
+    <li><a onclick="showView('tasks')" id="nav-tasks"><span class="nav-icon">✅</span> 跟进任务 <span class="nav-badge" id="task-badge" style="display:none">0</span></a></li>
+    <li><a onclick="showView('records')" id="nav-records"><span class="nav-icon">💬</span> 沟通记录</a></li>
+  </ul>
+  <div class="sidebar-section">标签分组</div>
+  <div class="sidebar-tags" id="sidebar-tags"></div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <h2 id="page-title">概览</h2>
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="global-search" placeholder="搜索联系人..." oninput="handleSearch(this.value)">
+    </div>
+    <button class="btn btn-primary" onclick="openAddContact()">＋ 添加联系人</button>
+  </div>
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div id="view-dashboard" class="view active">
+      <div class="stats-row" id="stats-row"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="card"><div class="card-title">📅 近期需要跟进</div><div id="dashboard-tasks"></div></div>
+        <div class="card"><div class="card-title">🕐 最近联系</div><div id="dashboard-recent"></div></div>
+      </div>
+    </div>
+
+    <!-- CONTACTS -->
+    <div id="view-contacts" class="view">
+      <div class="filter-bar" id="filter-bar">
+        <button class="filter-btn active" onclick="filterContacts('all',this)">全部</button>
+      </div>
+      <div class="contact-grid" id="contact-grid"></div>
+    </div>
+
+    <!-- TASKS -->
+    <div id="view-tasks" class="view">
+      <div class="filter-bar">
+        <button class="filter-btn active" onclick="filterTasks('all',this)">全部</button>
+        <button class="filter-btn" onclick="filterTasks('pending',this)">待跟进</button>
+        <button class="filter-btn" onclick="filterTasks('overdue',this)">已逾期</button>
+        <button class="filter-btn" onclick="filterTasks('done',this)">已完成</button>
+      </div>
+      <div id="tasks-list"></div>
+    </div>
+
+    <!-- RECORDS -->
+    <div id="view-records" class="view">
+      <div class="filter-bar" id="record-filter-bar">
+        <button class="filter-btn active" onclick="filterRecords('all',this)">全部类型</button>
+        <button class="filter-btn" onclick="filterRecords('call',this)">📞 电话</button>
+        <button class="filter-btn" onclick="filterRecords('meeting',this)">🤝 会面</button>
+        <button class="filter-btn" onclick="filterRecords('wechat',this)">💬 微信</button>
+        <button class="filter-btn" onclick="filterRecords('email',this)">📧 邮件</button>
+        <button class="filter-btn" onclick="filterRecords('work',this)">💼 工作往来</button>
+      </div>
+      <div id="records-list"></div>
+    </div>
+
+  </div>
+</main>
+
+<!-- Detail Overlay -->
+<div id="detail-overlay" style="display:none;position:fixed;inset:0;background:#F9FAFB;z-index:100;overflow-y:auto;padding:24px">
+  <div class="back-btn" onclick="backToList()">← 返回列表</div>
+  <div id="detail-content"></div>
+</div>
+
+<!-- Modal: Contact -->
+<div class="modal-overlay" id="modal-contact">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-contact-title">添加联系人</h3>
+      <button class="modal-close" onclick="closeModal('modal-contact')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">姓名 *</label><input class="form-control" id="f-name" placeholder="联系人姓名"></div>
+        <div class="form-group"><label class="form-label">职位</label><input class="form-control" id="f-title" placeholder="职位/角色"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">公司/单位</label><input class="form-control" id="f-company" placeholder="公司名称"></div>
+        <div class="form-group"><label class="form-label">行业</label><input class="form-control" id="f-industry" placeholder="所在行业"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">手机</label><input class="form-control" id="f-phone" placeholder="手机号码"></div>
+        <div class="form-group"><label class="form-label">邮箱</label><input class="form-control" id="f-email" placeholder="电子邮箱"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">微信号</label><input class="form-control" id="f-wechat" placeholder="微信号"></div>
+        <div class="form-group"><label class="form-label">城市</label><input class="form-control" id="f-city" placeholder="所在城市"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">关系来源</label>
+        <select class="form-control" id="f-source">
+          <option value="">请选择</option>
+          <option>朋友介绍</option><option>工作认识</option><option>社交媒体</option><option>会议活动</option><option>其他</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">标签（输入后按回车添加）</label>
+        <div class="tag-input-wrap" id="tag-input-wrap" onclick="document.getElementById('tag-input').focus()">
+          <input id="tag-input" placeholder="添加标签..." onkeydown="handleTagInput(event)">
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">备注</label><textarea class="form-control" id="f-notes" placeholder="关于这个人的一些备注..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-contact')">取消</button>
+      <button class="btn btn-primary" onclick="saveContact()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Record -->
+<div class="modal-overlay" id="modal-record">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>添加沟通/工作记录</h3>
+      <button class="modal-close" onclick="closeModal('modal-record')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">记录类型</label>
+        <div class="comm-type-bar" id="record-type-bar">
+          <button class="comm-type-btn active" data-type="call" onclick="selectRecordType(this)">📞 电话</button>
+          <button class="comm-type-btn" data-type="meeting" onclick="selectRecordType(this)">🤝 会面</button>
+          <button class="comm-type-btn" data-type="wechat" onclick="selectRecordType(this)">💬 微信</button>
+          <button class="comm-type-btn" data-type="email" onclick="selectRecordType(this)">📧 邮件</button>
+          <button class="comm-type-btn" data-type="work" onclick="selectRecordType(this)">💼 工作往来</button>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">日期</label><input class="form-control" id="r-date" type="date"></div>
+        <div class="form-group">
+          <label class="form-label">沟通氛围</label>
+          <select class="form-control" id="r-emotion">
+            <option value="great">😄 非常顺利</option>
+            <option value="good" selected>🙂 还不错</option>
+            <option value="neutral">😐 一般</option>
+            <option value="awkward">😅 有点尬</option>
+            <option value="bad">😞 不太好</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">记录内容 *</label><textarea class="form-control" id="r-content" placeholder="这次沟通/工作的主要内容、结果、重要信息..." style="min-height:100px"></textarea></div>
+      <div class="form-group"><label class="form-label">关键信息（对方提到的重要事项）</label><input class="form-control" id="r-key" placeholder="例如：他下周要去北京出差、对方预算约50万..."></div>
+      <div class="form-group"><label class="form-label">下一步行动（可选）</label><input class="form-control" id="r-next" placeholder="例如：三天后发方案、下周一约午饭..."></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-record')">取消</button>
+      <button class="btn btn-primary" onclick="saveRecord()">保存记录</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Task -->
+<div class="modal-overlay" id="modal-task">
+  <div class="modal" style="width:460px">
+    <div class="modal-header">
+      <h3>添加跟进任务</h3>
+      <button class="modal-close" onclick="closeModal('modal-task')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">任务内容 *</label><input class="form-control" id="t-content" placeholder="例如：发送项目方案、约下次会面..."></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">截止日期</label><input class="form-control" id="t-due" type="date"></div>
+        <div class="form-group">
+          <label class="form-label">优先级</label>
+          <select class="form-control" id="t-priority">
+            <option value="high">🔴 高优先级</option>
+            <option value="medium" selected>🟡 中优先级</option>
+            <option value="low">🟢 低优先级</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-task')">取消</button>
+      <button class="btn btn-primary" onclick="saveTask()">添加任务</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const COLORS=['#4F6EF7','#10B981','#F59E0B','#EF4444','#8B5CF6','#EC4899','#06B6D4','#84CC16','#F97316','#6366F1'];
+const TAG_COLORS={'客户':{bg:'#EEF1FF',color:'#4F6EF7'},'合作伙伴':{bg:'#ECFDF5',color:'#10B981'},'朋友':{bg:'#FEF3C7',color:'#D97706'},'同事':{bg:'#F3E8FF',color:'#7C3AED'},'投资人':{bg:'#FEE2E2',color:'#DC2626'},'供应商':{bg:'#E0F2FE',color:'#0284C7'},'VIP':{bg:'#FFF7ED',color:'#EA580C'},'潜在客户':{bg:'#F0FDF4',color:'#16A34A'}};
+const EMOTION_MAP={great:{icon:'😄',label:'非常顺利',color:'#ECFDF5',text:'#10B981'},good:{icon:'🙂',label:'还不错',color:'#EEF1FF',text:'#4F6EF7'},neutral:{icon:'😐',label:'一般',color:'#F3F4F6',text:'#6B7280'},awkward:{icon:'😅',label:'有点尬',color:'#FEF3C7',text:'#D97706'},bad:{icon:'😞',label:'不太好',color:'#FEE2E2',text:'#DC2626'}};
+const TYPE_MAP={call:{icon:'📞',label:'电话',color:'#EEF1FF'},meeting:{icon:'🤝',label:'会面',color:'#ECFDF5'},wechat:{icon:'💬',label:'微信',color:'#F0FDF4'},email:{icon:'📧',label:'邮件',color:'#FFF7ED'},work:{icon:'💼',label:'工作往来',color:'#F3E8FF'}};
+
+let DB={contacts:[],records:[],tasks:[]};
+function loadDB(){try{DB=JSON.parse(localStorage.getItem('crm_db')||'null')||{contacts:[],records:[],tasks:[]}}catch(e){DB={contacts:[],records:[],tasks:[]}}if(!DB.contacts)DB.contacts=[];if(!DB.records)DB.records=[];if(!DB.tasks)DB.tasks=[];}
+function saveDB(){localStorage.setItem('crm_db',JSON.stringify(DB));}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function getAvatar(name){const idx=name.charCodeAt(0)%COLORS.length;return{color:COLORS[idx],char:name.charAt(0).toUpperCase()};}
+function getDaysDiff(ds){if(!ds)return null;const n=new Date();n.setHours(0,0,0,0);const d=new Date(ds);d.setHours(0,0,0,0);return Math.round((d-n)/86400000);}
+function relativeDate(ds){if(!ds)return'未记录';const d=getDaysDiff(ds);if(d===0)return'今天';if(d===1)return'明天';if(d===-1)return'昨天';if(d>0)return d+'天后';return Math.abs(d)+'天前';}
+function getHeat(cid){const recs=DB.records.filter(r=>r.contactId===cid).sort((a,b)=>b.date.localeCompare(a.date));if(!recs.length)return'cold';const d=getDaysDiff(recs[0].date);if(d>=-14)return'hot';if(d>=-45)return'warm';return'cold';}
+function getTagStyle(tag){if(TAG_COLORS[tag])return TAG_COLORS[tag];const idx=(tag.charCodeAt(0)||0)%COLORS.length;return{bg:'#F3F4F6',color:COLORS[idx]};}
+function todayStr(){const n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');}
+
+let currentView='dashboard',editingContactId=null,currentRecordContactId=null,currentTaskContactId=null,currentRecordType='call',currentTags=[],contactFilter='all',taskFilter='all',recordFilter='all',searchQuery='',detailContactId=null;
+
+// Toast
+function showToast(msg,type=''){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type||'');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+// NAV
+function showView(view){
+  ['dashboard','contacts','tasks','records'].forEach(v=>{
+    const el=document.getElementById('view-'+v);if(el){el.classList.remove('active');el.style.display='';}
+    const nav=document.getElementById('nav-'+v);if(nav)nav.classList.remove('active');
+  });
+  document.getElementById('detail-overlay').style.display='none';
+  const vEl=document.getElementById('view-'+view);
+  if(vEl){vEl.classList.add('active');}
+  const nEl=document.getElementById('nav-'+view);
+  if(nEl)nEl.classList.add('active');
+  currentView=view;
+  const titles={dashboard:'概览',contacts:'联系人',tasks:'跟进任务',records:'沟通记录'};
+  document.getElementById('page-title').textContent=titles[view]||'';
+  if(view==='dashboard')renderDashboard();
+  if(view==='contacts')renderContacts();
+  if(view==='tasks')renderTasks();
+  if(view==='records')renderAllRecords();
+  updateTaskBadge();renderSidebarTags();
+}
+
+function openDetail(cid){
+  detailContactId=cid;
+  document.getElementById('detail-overlay').style.display='block';
+  document.getElementById('page-title').textContent='联系人详情';
+  ['dashboard','contacts','tasks','records'].forEach(v=>{
+    const el=document.getElementById('view-'+v);if(el)el.classList.remove('active');
+    const nav=document.getElementById('nav-'+v);if(nav)nav.classList.remove('active');
+  });
+  document.getElementById('nav-contacts').classList.add('active');
+  renderDetail(cid);
+}
+
+function backToList(){
+  document.getElementById('detail-overlay').style.display='none';
+  showView('contacts');
+}
+
+// DASHBOARD
+function renderDashboard(){
+  const total=DB.contacts.length;
+  const hot=DB.contacts.filter(c=>getHeat(c.id)==='hot').length;
+  const pending=DB.tasks.filter(t=>!t.done).length;
+  const now=new Date();
+  const thisMonth=DB.records.filter(r=>{const d=new Date(r.date);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();}).length;
+  document.getElementById('stats-row').innerHTML=`
+    <div class="stat-card blue"><div class="stat-label">联系人总数</div><div class="stat-value">${total}</div><div class="stat-sub">全部联系人</div></div>
+    <div class="stat-card green"><div class="stat-label">活跃联系</div><div class="stat-value">${hot}</div><div class="stat-sub">近14天有沟通</div></div>
+    <div class="stat-card yellow"><div class="stat-label">待跟进</div><div class="stat-value">${pending}</div><div class="stat-sub">未完成任务</div></div>
+    <div class="stat-card red"><div class="stat-label">本月互动</div><div class="stat-value">${thisMonth}</div><div class="stat-sub">沟通/工作记录</div></div>`;
+  const tasks=DB.tasks.filter(t=>!t.done).sort((a,b)=>(a.due||'').localeCompare(b.due||'')).slice(0,5);
+  const tEl=document.getElementById('dashboard-tasks');
+  tEl.innerHTML=tasks.length?tasks.map(t=>{const c=DB.contacts.find(x=>x.id===t.contactId);const diff=t.due?getDaysDiff(t.due):null;const ov=diff!==null&&diff<0;return`<div class="task-item"><div class="task-check ${t.done?'done':''}" onclick="toggleTask('${t.id}');renderDashboard()">✓</div><div class="task-content"><div class="task-title">${t.content}</div><div class="task-due ${ov?'overdue':''}">${c?c.name+' · ':''}${t.due?relativeDate(t.due):''}</div></div></div>`;}).join(''):`<div class="empty-state" style="padding:30px"><div class="empty-icon">✅</div><p>暂无待跟进任务</p></div>`;
+  const recs=[...DB.records].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,8);
+  const rEl=document.getElementById('dashboard-recent');
+  const seen=new Set();
+  const rows=recs.map(r=>{if(seen.has(r.contactId))return'';seen.add(r.contactId);const c=DB.contacts.find(x=>x.id===r.contactId);if(!c)return'';const av=getAvatar(c.name);const tm=TYPE_MAP[r.type]||{icon:'💬',label:'沟通'};return`<div class="task-item" style="cursor:pointer" onclick="openDetail('${c.id}')"><div class="avatar" style="width:36px;height:36px;border-radius:8px;font-size:14px;background:${av.color}">${av.char}</div><div class="task-content"><div class="task-title">${c.name}</div><div class="task-due">${tm.icon} ${tm.label} · ${relativeDate(r.date)}</div></div></div>`;}).join('');
+  rEl.innerHTML=rows||`<div class="empty-state" style="padding:30px"><div class="empty-icon">💬</div><p>暂无沟通记录</p></div>`;
+}
+
+// CONTACTS
+function renderContacts(){
+  let contacts=[...DB.contacts];
+  if(searchQuery){const q=searchQuery.toLowerCase();contacts=contacts.filter(c=>c.name.toLowerCase().includes(q)||(c.company||'').toLowerCase().includes(q)||(c.title||'').toLowerCase().includes(q)||(c.tags||[]).some(t=>t.toLowerCase().includes(q)));}
+  if(contactFilter!=='all')contacts=contacts.filter(c=>(c.tags||[]).includes(contactFilter));
+  renderFilterBar();
+  const grid=document.getElementById('contact-grid');
+  if(!contacts.length){grid.innerHTML='<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">👤</div><p>暂无联系人，点击右上角添加</p></div>';return;}
+  grid.innerHTML=contacts.map(c=>{
+    const av=getAvatar(c.name);const heat=getHeat(c.id);
+    const lastRec=DB.records.filter(r=>r.contactId===c.id).sort((a,b)=>b.date.localeCompare(a.date))[0];
+    const tags=(c.tags||[]).slice(0,3);
+    return`<div class="contact-card" onclick="openDetail('${c.id}')">
+      <div class="contact-card-header">
+        <div class="avatar" style="background:${av.color}">${av.char}</div>
+        <div style="flex:1;min-width:0"><div class="contact-name">${c.name}</div>${c.title?`<div class="contact-title">${c.title}</div>`:''} ${c.company?`<div class="contact-company">${c.company}</div>`:''}</div>
+        <div class="heat-badge ${heat}">${heat==='hot'?'🔥热':heat==='warm'?'☀️暖':'❄️冷'}</div>
+      </div>
+      ${tags.length?`<div class="contact-tags">${tags.map(t=>{const s=getTagStyle(t);return`<span class="tag" style="background:${s.bg};color:${s.color}">${t}</span>`;}).join('')}</div>`:''}
+      <div class="contact-meta">
+        <div style="display:flex;align-items:center;gap:4px"><div class="heat-dot heat-${heat}"></div>${lastRec?`最近: ${relativeDate(lastRec.date)}`:'暂无记录'}</div>
+        <span style="font-size:11px;color:var(--gray-400)">${DB.records.filter(r=>r.contactId===c.id).length} 条记录</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderFilterBar(){
+  const allTags=new Set();DB.contacts.forEach(c=>(c.tags||[]).forEach(t=>allTags.add(t)));
+  const bar=document.getElementById('filter-bar');
+  bar.innerHTML=`<button class="filter-btn ${contactFilter==='all'?'active':''}" onclick="filterContacts('all',this)">全部</button>`+[...allTags].map(t=>`<button class="filter-btn ${contactFilter===t?'active':''}" onclick="filterContacts('${t}',this)">${t}</button>`).join('');
+}
+
+function filterContacts(tag,btn){contactFilter=tag;document.querySelectorAll('#filter-bar .filter-btn').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');renderContacts();}
+
+// DETAIL
+function renderDetail(cid){
+  const c=DB.contacts.find(x=>x.id===cid);if(!c)return;
+  const av=getAvatar(c.name);const heat=getHeat(c.id);
+  const records=DB.records.filter(r=>r.contactId===cid).sort((a,b)=>b.date.localeCompare(a.date));
+  const tasks=DB.tasks.filter(t=>t.contactId===cid);
+  document.getElementById('detail-content').innerHTML=`
+  <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
+    <div class="detail-left">
+      <div class="card">
+        <div style="text-align:center;margin-bottom:16px">
+          <div class="detail-avatar" style="background:${av.color}">${av.char}</div>
+          <div class="detail-name">${c.name}</div>
+          <div class="detail-subtitle">${[c.title,c.company].filter(Boolean).join(' @ ')}</div>
+          <div style="margin-top:10px"><span class="heat-badge ${heat}">${heat==='hot'?'🔥 热络':heat==='warm'?'☀️ 温热':'❄️ 冷淡'}</span></div>
+        </div>
+        ${c.tags&&c.tags.length?`<div class="contact-tags" style="justify-content:center;margin-bottom:12px">${c.tags.map(t=>{const s=getTagStyle(t);return`<span class="tag" style="background:${s.bg};color:${s.color}">${t}</span>`;}).join('')}</div>`:''}
+        <div>
+          ${c.phone?`<div class="detail-info-row"><span class="info-label">📞 手机</span><span class="info-val">${c.phone}</span></div>`:''}
+          ${c.email?`<div class="detail-info-row"><span class="info-label">📧 邮箱</span><span class="info-val">${c.email}</span></div>`:''}
+          ${c.wechat?`<div class="detail-info-row"><span class="info-label">💬 微信</span><span class="info-val">${c.wechat}</span></div>`:''}
+          ${c.city?`<div class="detail-info-row"><span class="info-label">📍 城市</span><span class="info-val">${c.city}</span></div>`:''}
+          ${c.industry?`<div class="detail-info-row"><span class="info-label">🏢 行业</span><span class="info-val">${c.industry}</span></div>`:''}
+          ${c.source?`<div class="detail-info-row"><span class="info-label">🔗 来源</span><span class="info-val">${c.source}</span></div>`:''}
+        </div>
+        ${c.notes?`<div style="margin-top:12px;padding:10px;background:var(--gray-50);border-radius:8px;font-size:13px;color:var(--gray-600);line-height:1.6">${c.notes}</div>`:''}
+        <div style="display:flex;gap:8px;margin-top:16px">
+          <button class="btn btn-secondary btn-sm" style="flex:1" onclick="openEditContact('${c.id}')">✏️ 编辑</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteContact('${c.id}')">删除</button>
+        </div>
+      </div>
+      <div class="ai-suggestion">
+        <h3>✨ AI 增信建议</h3>
+        <div id="ai-content-${c.id}">${generateAI(c,records,tasks)}</div>
+        <button class="regen-btn" onclick="refreshAI('${c.id}')">🔄 刷新建议</button>
+      </div>
+    </div>
+    <div class="detail-right">
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="tab-bar">
+          <div class="tab-btn active" onclick="switchTab(this,'tab-rec-${c.id}','tg-${c.id}')">沟通记录 (${records.length})</div>
+          <div class="tab-btn" onclick="switchTab(this,'tab-task-${c.id}','tg-${c.id}')">跟进任务 (${tasks.length})</div>
+        </div>
+        <div style="padding:20px">
+          <div class="tab-panel active" id="tab-rec-${c.id}" data-group="tg-${c.id}">
+            <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+              <button class="btn btn-primary btn-sm" onclick="openAddRecord('${c.id}')">＋ 添加记录</button>
+            </div>
+            ${records.length?`<ul class="timeline">${records.map(r=>renderTLItem(r,c.id)).join('')}</ul>`:`<div class="empty-state"><div class="empty-icon">💬</div><p>还没有沟通记录，记录你们的第一次互动吧</p></div>`}
+          </div>
+          <div class="tab-panel" id="tab-task-${c.id}" data-group="tg-${c.id}">
+            <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+              <button class="btn btn-primary btn-sm" onclick="openAddTask('${c.id}')">＋ 添加任务</button>
+            </div>
+            ${tasks.length?tasks.map(t=>renderTaskItem(t)).join(''):`<div class="empty-state"><div class="empty-icon">✅</div><p>暂无跟进任务</p></div>`}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderTLItem(r,cid){
+  const tm=TYPE_MAP[r.type]||{icon:'💬',label:'沟通',color:'#F3F4F6'};
+  const em=EMOTION_MAP[r.emotion]||EMOTION_MAP.good;
+  return`<li class="timeline-item">
+    <div class="timeline-dot" style="background:${tm.color}">${tm.icon}</div>
+    <div class="timeline-content">
+      <div class="timeline-header">
+        <span class="timeline-type">${tm.label}</span>
+        <span class="timeline-date">${r.date}</span>
+        <button class="btn btn-danger btn-sm" style="padding:2px 8px;font-size:11px;margin-left:4px" onclick="deleteRecord('${r.id}','${cid}')">删除</button>
+      </div>
+      <div class="timeline-body">
+        ${r.content}
+        ${r.key?`<div style="margin-top:8px;padding:6px 8px;background:#fff;border-radius:6px;border-left:3px solid var(--primary)"><span style="font-size:11px;font-weight:600;color:var(--primary)">关键信息：</span> ${r.key}</div>`:''}
+        ${r.next?`<div style="margin-top:6px;font-size:12px;color:var(--success)">▶ 下一步：${r.next}</div>`:''}
+        <div><span class="timeline-emotion" style="background:${em.color};color:${em.text}">${em.icon} ${em.label}</span></div>
+      </div>
+    </div>
+  </li>`;
+}
+
+function renderTaskItem(t){
+  const diff=t.due?getDaysDiff(t.due):null;
+  const ov=diff!==null&&diff<0&&!t.done;
+  const p={high:'🔴',medium:'🟡',low:'🟢'}[t.priority||'medium'];
+  return`<div class="task-item">
+    <div class="task-check ${t.done?'done':''}" onclick="toggleTask('${t.id}');renderDetail('${t.contactId}')">✓</div>
+    <div class="task-content" style="flex:1">
+      <div class="task-title ${t.done?'done':''}">${p} ${t.content}</div>
+      <div class="task-due ${ov?'overdue':''}">${t.due?`截止：${relativeDate(t.due)} (${t.due})`:'无截止日期'}</div>
+    </div>
+    <button class="btn btn-danger btn-sm" style="padding:2px 8px;font-size:11px" onclick="deleteTask('${t.id}','${t.contactId}')">删除</button>
+  </div>`;
+}
+
+function switchTab(btn,tid,group){
+  document.querySelectorAll('[data-group="'+group+'"]').forEach(p=>p.classList.remove('active'));
+  btn.parentElement.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(tid).classList.add('active');btn.classList.add('active');
+}
+
+// AI
+function generateAI(c,records,tasks){
+  const heat=getHeat(c.id);const lastRec=records[0];const sug=[];
+  if(heat==='cold')sug.push('距离上次联系已超过45天，是时候重新取得联系了。可以找一个自然的切入点，比如分享一篇行业资讯。');
+  else if(heat==='warm')sug.push('关系保持在温热状态，建议在未来两周内安排一次会面或通话，加深互动频率。');
+  else sug.push('关系当前处于活跃状态，趁热打铁，可以推进合作事项或邀请对方参与新项目。');
+  if(lastRec){
+    if(lastRec.next)sug.push(`上次沟通留下了待办：「${lastRec.next}」，记得及时跟进。`);
+    if(lastRec.key)sug.push(`对方上次提到了「${lastRec.key}」，在下次联系时以此为话题关切，会让对方感受到你的用心。`);
+    if(lastRec.emotion==='bad'||lastRec.emotion==='awkward')sug.push('上次互动氛围不太好，建议主动发一条轻松的消息破冰，不必直接提及上次的事。');
+  }
+  if(c.tags&&c.tags.includes('客户'))sug.push('对客户关系，定期发送有价值的行业洞察或解决方案，能持续提升你的专业形象。');
+  if(c.tags&&c.tags.includes('投资人'))sug.push('保持定期的项目进展更新，让投资人对你的执行力有持续感知，信任感源于稳定的信息流。');
+  if(!records.length)sug.push('还没有任何沟通记录，尽快添加第一条记录，开始系统化管理这段关系。');
+  if(tasks.filter(t=>!t.done).length===0)sug.push('暂无跟进任务，可以添加一个具体的行动计划，把想法变成执行。');
+  if(!sug.length)sug.push('保持稳定的联系频率是人脉管理的核心，定期联系比偶尔的盛情款待更有效。');
+  return sug.slice(0,3).map(s=>`<div class="suggestion-item">${s}</div>`).join('');
+}
+
+function refreshAI(cid){
+  const c=DB.contacts.find(x=>x.id===cid);if(!c)return;
+  const records=DB.records.filter(r=>r.contactId===cid).sort((a,b)=>b.date.localeCompare(a.date));
+  const tasks=DB.tasks.filter(t=>t.contactId===cid);
+  document.getElementById('ai-content-'+cid).innerHTML=generateAI(c,records,tasks);
+  showToast('建议已刷新','success');
+}
+
+// TASKS VIEW
+function renderTasks(){
+  let tasks=[...DB.tasks];
+  if(taskFilter==='pending')tasks=tasks.filter(t=>!t.done);
+  else if(taskFilter==='done')tasks=tasks.filter(t=>t.done);
+  else if(taskFilter==='overdue')tasks=tasks.filter(t=>!t.done&&t.due&&getDaysDiff(t.due)<0);
+  tasks.sort((a,b)=>{if(a.done!==b.done)return a.done?1:-1;return(a.due||'9999').localeCompare(b.due||'9999');});
+  const el=document.getElementById('tasks-list');
+  if(!tasks.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">✅</div><p>暂无任务</p></div>';return;}
+  el.innerHTML=`<div class="card">`+tasks.map(t=>{
+    const c=DB.contacts.find(x=>x.id===t.contactId);
+    const diff=t.due?getDaysDiff(t.due):null;const ov=diff!==null&&diff<0&&!t.done;
+    const p={high:'🔴',medium:'🟡',low:'🟢'}[t.priority||'medium'];
+    return`<div class="task-full-item">
+      <div class="task-check ${t.done?'done':''}" onclick="toggleTask('${t.id}');renderTasks()">✓</div>
+      <div class="task-full-content">
+        <div class="task-full-title ${t.done?'done':''}">${p} ${t.content}</div>
+        <div class="task-full-meta">
+          ${c?`<span class="contact-link" onclick="openDetail('${c.id}')">${c.name}</span>`:''}
+          <span class="${ov?'overdue':''}">${t.due?`截止：${t.due} (${relativeDate(t.due)})`:'无截止日期'}</span>
+        </div>
+      </div>
+      <button class="btn btn-danger btn-sm" style="padding:2px 8px;font-size:11px" onclick="deleteTask('${t.id}',null)">删除</button>
+    </div>`;
+  }).join('')+`</div>`;
+}
+
+function filterTasks(type,btn){taskFilter=type;document.querySelectorAll('#view-tasks .filter-bar .filter-btn').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');renderTasks();}
+
+function updateTaskBadge(){const p=DB.tasks.filter(t=>!t.done).length;const b=document.getElementById('task-badge');if(p>0){b.textContent=p;b.style.display='';}else b.style.display='none';}
+
+// RECORDS VIEW
+function renderAllRecords(){
+  let records=[...DB.records];
+  if(recordFilter!=='all')records=records.filter(r=>r.type===recordFilter);
+  records.sort((a,b)=>b.date.localeCompare(a.date));
+  const el=document.getElementById('records-list');
+  if(!records.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">💬</div><p>暂无沟通记录</p></div>';return;}
+  el.innerHTML=records.map(r=>{
+    const c=DB.contacts.find(x=>x.id===r.contactId);
+    const tm=TYPE_MAP[r.type]||{icon:'💬',label:'沟通',color:'#F3F4F6'};
+    const em=EMOTION_MAP[r.emotion]||EMOTION_MAP.good;
+    return`<div class="card" style="margin-bottom:12px">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div style="width:40px;height:40px;border-radius:10px;background:${tm.color};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${tm.icon}</div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <span style="font-weight:600;font-size:14px">${tm.label}</span>
+            ${c?`<span style="font-size:13px;color:var(--primary);cursor:pointer" onclick="openDetail('${c.id}')">${c.name}</span>`:''}
+            <span style="margin-left:auto;font-size:12px;color:var(--gray-400)">${r.date}</span>
+          </div>
+          <div style="font-size:13px;color:var(--gray-600);line-height:1.6">${r.content}</div>
+          ${r.key?`<div style="margin-top:6px;font-size:12px;color:var(--primary)">🔑 ${r.key}</div>`:''}
+          ${r.next?`<div style="margin-top:4px;font-size:12px;color:var(--success)">▶ ${r.next}</div>`:''}
+          <span class="timeline-emotion" style="margin-top:6px;background:${em.color};color:${em.text};display:inline-flex">${em.icon} ${em.label}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterRecords(type,btn){recordFilter=type;document.querySelectorAll('#record-filter-bar .filter-btn').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');renderAllRecords();}
+
+// SIDEBAR TAGS
+function renderSidebarTags(){
+  const tc={};DB.contacts.forEach(c=>(c.tags||[]).forEach(t=>{tc[t]=(tc[t]||0)+1;}));
+  const el=document.getElementById('sidebar-tags');
+  if(!Object.keys(tc).length){el.innerHTML='<div style="padding:8px 12px;font-size:12px;color:#64748B">暂无标签</div>';return;}
+  el.innerHTML=Object.entries(tc).map(([tag,cnt])=>{const s=getTagStyle(tag);return`<div class="tag-item" onclick="filterByTag('${tag}')"><div class="tag-dot" style="background:${s.color}"></div><span>${tag}</span><span class="tag-count">${cnt}</span></div>`;}).join('');
+}
+
+function filterByTag(tag){contactFilter=tag;showView('contacts');setTimeout(()=>{document.querySelectorAll('#filter-bar .filter-btn').forEach(b=>{if(b.textContent===tag)b.classList.add('active');else b.classList.remove('active');});},80);}
+
+// SEARCH
+function handleSearch(val){searchQuery=val;if(currentView==='contacts')renderContacts();else if(val){showView('contacts');}}
+
+// MODAL
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+// CONTACT FORM
+let currentTags=[];
+function openAddContact(){
+  editingContactId=null;currentTags=[];
+  document.getElementById('modal-contact-title').textContent='添加联系人';
+  ['name','title','company','industry','phone','email','wechat','city','notes'].forEach(f=>document.getElementById('f-'+f).value='');
+  document.getElementById('f-source').value='';
+  renderTagPills();openModal('modal-contact');
+}
+function openEditContact(id){
+  const c=DB.contacts.find(x=>x.id===id);if(!c)return;
+  editingContactId=id;currentTags=[...(c.tags||[])];
+  document.getElementById('modal-contact-title').textContent='编辑联系人';
+  ['name','title','company','industry','phone','email','wechat','city','notes'].forEach(f=>document.getElementById('f-'+f).value=c[f]||'');
+  document.getElementById('f-source').value=c.source||'';
+  renderTagPills();openModal('modal-contact');
+}
+function renderTagPills(){
+  const wrap=document.getElementById('tag-input-wrap');
+  const input=document.getElementById('tag-input');
+  wrap.innerHTML='';
+  currentTags.forEach(tag=>{
+    const s=getTagStyle(tag);
+    const pill=document.createElement('span');
+    pill.className='tag-pill';pill.style.background=s.bg;pill.style.color=s.color;
+    pill.innerHTML=`${tag} <span class="remove-tag" onclick="removeTag('${tag}')">×</span>`;
+    wrap.appendChild(pill);
+  });
+  wrap.appendChild(input);input.value='';
+}
+function handleTagInput(e){if(e.key==='Enter'||e.key===','){e.preventDefault();const v=e.target.value.trim().replace(/,$/,'');if(v&&!currentTags.includes(v)){currentTags.push(v);renderTagPills();}else e.target.value='';}}
+function removeTag(tag){currentTags=currentTags.filter(t=>t!==tag);renderTagPills();}
+function saveContact(){
+  const name=document.getElementById('f-name').value.trim();
+  if(!name){showToast('请输入姓名','error');return;}
+  const data={name,tags:[...currentTags]};
+  ['title','company','industry','phone','email','wechat','city','notes'].forEach(f=>{data[f]=document.getElementById('f-'+f).value.trim();});
+  data.source=document.getElementById('f-source').value;
+  if(editingContactId){
+    const idx=DB.contacts.findIndex(x=>x.id===editingContactId);
+    if(idx>=0){DB.contacts[idx]={...DB.contacts[idx],...data};}
+  }else{DB.contacts.push({id:uid(),createdAt:todayStr(),...data});}
+  saveDB();closeModal('modal-contact');
+  if(editingContactId&&detailContactId){renderDetail(detailContactId);}
+  else renderContacts();
+  renderSidebarTags();updateTaskBadge();
+  showToast(editingContactId?'联系人已更新':'联系人已添加','success');
+}
+function deleteContact(id){
+  if(!confirm('确定删除这个联系人吗？相关记录和任务也会一并删除。'))return;
+  DB.contacts=DB.contacts.filter(c=>c.id!==id);
+  DB.records=DB.records.filter(r=>r.contactId!==id);
+  DB.tasks=DB.tasks.filter(t=>t.contactId!==id);
+  saveDB();backToList();showToast('已删除','success');
+}
+
+// RECORD FORM
+function openAddRecord(cid){
+  currentRecordContactId=cid;currentRecordType='call';
+  document.getElementById('r-date').value=todayStr();
+  document.getElementById('r-content').value='';
+  document.getElementById('r-key').value='';
+  document.getElementById('r-next').value='';
+  document.getElementById('r-emotion').value='good';
+  document.querySelectorAll('#record-type-bar .comm-type-btn').forEach(b=>{b.classList.toggle('active',b.dataset.type==='call');});
+  openModal('modal-record');
+}
+function selectRecordType(btn){currentRecordType=btn.dataset.type;document.querySelectorAll('#record-type-bar .comm-type-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+function saveRecord(){
+  const content=document.getElementById('r-content').value.trim();
+  if(!content){showToast('请填写记录内容','error');return;}
+  const rec={id:uid(),contactId:currentRecordContactId,type:currentRecordType,date:document.getElementById('r-date').value||todayStr(),emotion:document.getElementById('r-emotion').value,content,key:document.getElementById('r-key').value.trim(),next:document.getElementById('r-next').value.trim()};
+  DB.records.push(rec);saveDB();closeModal('modal-record');
+  renderDetail(currentRecordContactId);showToast('记录已保存','success');
+}
+function deleteRecord(rid,cid){
+  if(!confirm('删除这条记录？'))return;
+  DB.records=DB.records.filter(r=>r.id!==rid);saveDB();renderDetail(cid);showToast('已删除');
+}
+
+// TASK FORM
+function openAddTask(cid){
+  currentTaskContactId=cid;
+  document.getElementById('t-content').value='';
+  document.getElementById('t-due').value='';
+  document.getElementById('t-priority').value='medium';
+  openModal('modal-task');
+}
+function saveTask(){
+  const content=document.getElementById('t-content').value.trim();
+  if(!content){showToast('请填写任务内容','error');return;}
+  const task={id:uid(),contactId:currentTaskContactId,content,due:document.getElementById('t-due').value,priority:document.getElementById('t-priority').value,done:false,createdAt:todayStr()};
+  DB.tasks.push(task);saveDB();closeModal('modal-task');
+  if(detailContactId)renderDetail(detailContactId);
+  updateTaskBadge();showToast('任务已添加','success');
+}
+function toggleTask(id){
+  const t=DB.tasks.find(x=>x.id===id);if(t){t.done=!t.done;saveDB();updateTaskBadge();}
+}
+function deleteTask(id,cid){
+  DB.tasks=DB.tasks.filter(t=>t.id!==id);saveDB();updateTaskBadge();
+  if(cid&&detailContactId)renderDetail(detailContactId);else renderTasks();
+  showToast('任务已删除');
+}
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(o=>{o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});});
+
+// INIT with demo data
+function initDemoData(){
+  if(DB.contacts.length>0)return;
+  const demo=[
+    {id:uid(),name:'张明远',title:'产品总监',company:'未来科技',industry:'互联网',phone:'138xxxx0001',email:'zhang@future.com',wechat:'zhangmy',city:'北京',source:'工作认识',tags:['客户','VIP'],notes:'非常注重数据驱动，沟通直接，喜欢看具体数字。',createdAt:'2026-01-01'},
+    {id:uid(),name:'李晓雪',title:'创始人',company:'星辰资本',industry:'投资',phone:'139xxxx0002',email:'li@xingchen.vc',wechat:'lixiaoxa',city:'上海',source:'朋友介绍',tags:['投资人'],notes:'背景深厚，关注早期项目，对消费赛道感兴趣。',createdAt:'2026-01-05'},
+    {id:uid(),name:'王建国',title:'技术负责人',company:'同行网络',industry:'互联网',phone:'137xxxx0003',email:'wang@tx.com',wechat:'wjg_tech',city:'深圳',source:'会议活动',tags:['合作伙伴','同事'],notes:'技术背景很强，做事靠谱，可以深度合作。',createdAt:'2026-01-10'},
+    {id:uid(),name:'陈芳',title:'市场总监',company:'品汇传媒',industry:'媒体',phone:'136xxxx0004',email:'chen@ph.media',wechat:'chenfang88',city:'广州',source:'社交媒体',tags:['潜在客户'],notes:'对内容营销很有研究，双方合作空间大。',createdAt:'2026-01-15'},
+  ];
+  DB.contacts=demo;
+
+  const r1date='2026-03-15',r2date='2026-03-08',r3date='2026-02-20',r4date='2026-01-25';
+  DB.records=[
+    {id:uid(),contactId:demo[0].id,type:'meeting',date:r1date,emotion:'great',content:'在望京咖啡厅见面，详细介绍了产品路线图。对方对Q2的功能非常感兴趣，特别提到希望加入AI辅助功能。',key:'Q2要加入AI功能，预算可以到80万',next:'本周发送详细方案文档'},
+    {id:uid(),contactId:demo[0].id,type:'call',date:r2date,emotion:'good',content:'电话跟进上次会议内容，确认了需求文档的接收情况。',key:'',next:'等对方反馈'},
+    {id:uid(),contactId:demo[1].id,type:'wechat',date:r2date,emotion:'good',content:'发了一篇消费品牌分析文章，对方回复说看完了觉得有意思，问下周有没有时间喝茶。',key:'对方下周在北京，可以约见面',next:'约下周见面'},
+    {id:uid(),contactId:demo[2].id,type:'work',date:r3date,emotion:'good',content:'共同参与了一个技术方案评审，对方的建议很有价值，帮助优化了架构设计。',key:'',next:'将评审结果整理成文档共享'},
+    {id:uid(),contactId:demo[3].id,type:'meeting',date:r4date,emotion:'neutral',content:'线下见面，交流了各自公司的业务方向。对方对合作方向还比较模糊，需要再多沟通几次。',key:'他们Q3有大型campaign计划',next:'找合适时机跟进Q3合作机会'},
+  ];
+
+  DB.tasks=[
+    {id:uid(),contactId:demo[0].id,content:'发送Q2产品方案文档',due:'2026-03-25',priority:'high',done:false,createdAt:'2026-03-15'},
+    {id:uid(),contactId:demo[1].id,content:'约李晓雪下周北京见面',due:'2026-03-27',priority:'high',done:false,createdAt:'2026-03-08'},
+    {id:uid(),contactId:demo[2].id,content:'整理技术评审文档并共享',due:'2026-03-24',priority:'medium',done:false,createdAt:'2026-02-20'},
+    {id:uid(),contactId:demo[3].id,content:'跟进Q3campaign合作机会',due:'2026-04-15',priority:'low',done:false,createdAt:'2026-01-25'},
+  ];
+
+  saveDB();
+}
+
+// Start
+loadDB();
+initDemoData();
+renderDashboard();
+renderSidebarTags();
+updateTaskBadge();
+</script>
+</body>
+</html>
